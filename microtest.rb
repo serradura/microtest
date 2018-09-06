@@ -2,18 +2,12 @@
 
 require 'set'
 require 'singleton'
-require 'forwardable'
 
 module Microtest
-  VERSION = '0.1.0'
+  VERSION = '0.2.0'
 
   class Runner
     include Singleton
-
-    class << self
-      extend Forwardable
-      def_delegators :instance, :register, :call
-    end
 
     def initialize
       @test_cases = Set.new
@@ -28,9 +22,9 @@ module Microtest
         invoke(test_case, :setup_all)
 
         test_methods.each do |test_method|
-          invoke(test_case, :setup) { test_method }
+          invoke(test_case, :setup, test_method)
           invoke(test_case, test_method)
-          invoke(test_case, :teardown) { test_method }
+          invoke(test_case, :teardown, test_method)
         end
 
         invoke(test_case, :teardown_all)
@@ -39,12 +33,11 @@ module Microtest
 
     private
 
-    def invoke(test_case, step)
-      return unless test_case.respond_to?(step)
-      step_arg = yield if block_given?
-      test_case.public_send(*[step, step_arg].compact)
+    def invoke(test_case, step_method, test_method = nil)
+      return unless test_case.respond_to?(step_method)
+      test_case.public_send(*[step_method, test_method].compact)
     rescue ArgumentError
-      test_case.public_send(step)
+      test_case.public_send(step_method)
     end
 
     def call_each
@@ -58,7 +51,15 @@ module Microtest
     FAILURE_MESSAGE = "Failed test"
 
     def self.inherited(test_case)
-      Runner.register(test_case)
+      Runner.instance.register(test_case)
+    end
+
+    def self.test(name, &block)
+      test_method = "test_#{name.gsub(/\s+/,'_')}"
+
+      raise "#{test_method} is already defined in #{self}" if method_defined?(test_method)
+
+      define_method(test_method, &block)
     end
 
     def assert(test, msg = FAILURE_MESSAGE)
@@ -78,7 +79,7 @@ module Microtest
   end
 
   def self.call
-    Runner.call
+    Runner.instance.call
 
     puts "\n\e[#{32}mTests passed! \u{1f60e}\e[0m\n\n"
   rescue => e

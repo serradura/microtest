@@ -1,32 +1,25 @@
 # frozen_string_literal: true
 
-require_relative 'microtest'
-
 class TestMicrotest < Microtest::Test
-  def setup_all
-    @final_assertion = -> (test) { test.assert true }
+  @@counter = 0
+
+  def setup
+    @@counter += 1
   end
 
-  def setup(test_method)
-    @a = test_method == :test_a
-    @last_setup_test_method = test_method
+  def teardown
+    @@counter -= 1
   end
 
-  def teardown(test_method)
-    assert @last_setup_test_method == test_method
+  def test_classic_assertion
+    assert 1 == @@counter
   end
 
-  def teardown_all
-    @final_assertion.call(self)
+  test "assert" do
+    assert 1 == @@counter, "assertion result must be true"
   end
 
-  def test_a
-    assert @a
-  end
-
-  def test_b
-    refute @a
+  test "refute" do
+    refute 1 != @@counter, "assertion result must be false"
   end
 end
-
-Microtest.call

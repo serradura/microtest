@@ -10,4 +10,6 @@ A xUnit family unit testing microframework for Ruby.
 
 ```sh
   rake test
+  # or
+  ruby test_main.rb
 ```
