@@ -4,7 +4,13 @@ require 'set'
 require 'singleton'
 
 module Microtest
-  VERSION = '0.3.0'
+  VERSION = '0.4.0'
+
+  BuildRandom = -> (seed, randomized) do
+    Random.new Integer(seed ? seed : rand(1000..99999)) if seed || randomized
+  end
+
+  RandomBuilder = -> (randomized) { BuildRandom.call(ENV['SEED'], randomized) }
 
   class Runner
     include Singleton
@@ -17,27 +23,21 @@ module Microtest
       @test_cases.add(test_case) and true
     end
 
-    def call(seed: nil, randomized: nil)
-      build_random(seed, randomized).tap do |random|
-        iterate_each_test_after_try_to_apply(random) do |test, test_methods|
-          test.call(:setup_all)
+    def call(random:)
+      iterate_each_test_after_try_to_apply(random) do |test, test_methods|
+        test.call(:setup_all)
 
-          test_methods.each do |test_method|
-            test.call(:setup, test_method)
-            test.call(test_method)
-            test.call(:teardown, test_method)
-          end
-
-          test.call(:teardown_all)
+        test_methods.each do |test_method|
+          test.call(:setup, test_method)
+          test.call(test_method)
+          test.call(:teardown, test_method)
         end
+
+        test.call(:teardown_all)
       end
     end
 
     private
-
-    def build_random(seed, randomized)
-      Random.new Integer(seed ? seed : rand(1000..99999)) if seed || randomized
-    end
 
     def iterate_each_test_after_try_to_apply(random)
       list(@test_cases, random).each do |test_case|
@@ -86,8 +86,8 @@ module Microtest
     end
   end
 
-  def self.report
-    result = yield(Runner.instance)
+  def self.report(randomized = nil)
+    yield result = RandomBuilder.call(randomized)
 
     puts "\n\e[#{32}m\u{1f60e} Tests passed!\e[0m\n\n"
   rescue => e
@@ -99,6 +99,6 @@ module Microtest
   end
 
   def self.call(randomized: false)
-    report { |runner| runner.call seed: ENV['SEED'], randomized: randomized }
+    report(randomized) { |random| Runner.instance.call(random: random) }
   end
 end
