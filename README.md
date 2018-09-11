@@ -132,5 +132,5 @@ Microtest.call randomized: true
 ```sh
   rake test
   # or
-  ruby test_runner.rb
+  ruby test_runners.rb
 ```
