@@ -4,7 +4,7 @@ require 'set'
 require 'singleton'
 
 module Microtest
-  VERSION = '0.6.0'
+  VERSION = '0.7.0'
 
   TryToBuildARandom = -> (seed, randomized) do
     Random.new Integer(seed ? seed : rand(1000..99999)) if seed || randomized
@@ -22,7 +22,7 @@ module Microtest
     end
 
     def call(random:)
-      iterate_each_test_after_try_to_apply(random) do |test, test_methods|
+      iterate_each_test_after_try_to_shuffle(random) do |test, test_methods|
         test.call(:setup_all)
 
         test_methods.each do |test_method|
@@ -37,7 +37,7 @@ module Microtest
 
     private
 
-    def iterate_each_test_after_try_to_apply(random)
+    def iterate_each_test_after_try_to_shuffle(random)
       shuffle_if_random(@test_cases, random).each do |test_case|
         test_methods = test_case.public_instance_methods.grep(/\Atest_/)
 
@@ -85,21 +85,21 @@ module Microtest
     end
   end
 
-  def self.report(randomized = nil)
+  def self.report(randomized = nil, out:)
     random = TryToBuildARandom.call(ENV['SEED'], randomized)
 
     yield -> { Runner.instance.call(random: random) }
 
-    puts "\n\e[#{32}m\u{1f60e} Tests passed!\e[0m\n\n"
+    out.puts "\n\e[#{32}m\u{1f60e} Tests passed!\e[0m\n\n"
   rescue => e
     content = ["\u{1f4a9} <#{e.class}> #{e.message}\n", e.backtrace.join("\n")]
 
-    puts ["\e[#{31}m", content, "\e[0m"].flatten.join("\n")
+    out.puts ["\e[#{31}m", content, "\e[0m"].flatten.join("\n")
   ensure
-    puts "Randomized with seed: #{random.seed}\n\n" if random.is_a?(Random)
+    out.puts "Randomized with seed: #{random.seed}\n\n" if random.is_a?(Random)
   end
 
-  def self.call(randomized: false)
-    report(randomized) { |runner| runner.call }
+  def self.call(randomized: false, out: Kernel)
+    report(randomized, out: out) { |runner| runner.call }
   end
 end
