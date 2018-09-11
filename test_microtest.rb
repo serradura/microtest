@@ -9,6 +9,17 @@ class TestMicrotest < Microtest::Test
     @counter -= 1
   end
 
+  def test_truthy
+    assert 1
+    assert ''
+    assert true
+  end
+
+  def test_falsey
+    refute false
+    refute nil
+  end
+
   def test_method_assertion
     assert 1 == @counter
   end

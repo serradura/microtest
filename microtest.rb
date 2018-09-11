@@ -4,7 +4,7 @@ require 'set'
 require 'singleton'
 
 module Microtest
-  VERSION = '0.5.0'
+  VERSION = '0.6.0'
 
   TryToBuildARandom = -> (seed, randomized) do
     Random.new Integer(seed ? seed : rand(1000..99999)) if seed || randomized
@@ -68,19 +68,20 @@ module Microtest
       define_method(method, &block)
     end
 
-    def assert(test, msg = 'Expected true but got false')
-      stop!(caller, msg) unless test
+    def assert(test, msg = '%s is not truthy.')
+      stop!(test, caller, msg) unless test
     end
 
-    def refute(test, msg = 'Expected false but got true')
-      stop!(caller, msg) if test
+    def refute(test, msg = '%s is neither nil or false.')
+      stop!(test, caller, msg) if test
     end
 
     private
 
-    def stop!(kaller, msg)
+    def stop!(test, kaller, msg)
+      message = msg % test.inspect
       caller_location = kaller[0].split('/').last
-      raise RuntimeError, msg, [caller_location]
+      raise RuntimeError, message, [caller_location]
     end
   end
 
