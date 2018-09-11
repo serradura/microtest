@@ -11,7 +11,7 @@ A xUnit family unit testing microframework for Ruby.
 ```sh
   rake test
   # or
-  ruby test_main.rb
+  ruby test_runner.rb
 ```
 
 ## How to use
@@ -44,7 +44,7 @@ end
 
 ### 3) Create the test runner
 ```ruby
-# test_main.rb
+# test_runner.rb
 require_relative 'number'
 
 require_relative 'microtest'
@@ -58,7 +58,7 @@ Microtest.call
 
 ### 4) Run your tests
 ```sh
-ruby test_main.rb
+ruby test_runner.rb
 ```
 
 ## Features
@@ -110,7 +110,7 @@ end
 
 Use a seed value if do you want a random execution.
 ```sh
-SEED=1234 ruby test_main.rb
+SEED=1234 ruby test_runner.rb
 ```
 
 Or enable it via `Microtest.call`. e.g:

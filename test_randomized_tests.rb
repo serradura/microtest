@@ -3,23 +3,23 @@
 module RandomizedTests
   require 'forwardable'
 
-  class Tracker
+  class ExecutionOrderTracker
     include Singleton
 
     class << self
       extend Forwardable
-      def_delegators :instance, :register, :data
+      def_delegators :instance, :register, :registered
     end
 
     def initialize
       @data = []
     end
 
-    def register(klass, values)
-      @data << [klass, values]
+    def register(test, values)
+      @data << [test.class, values]
     end
 
-    def data
+    def registered
       @data.dup
     end
   end
@@ -34,7 +34,7 @@ module RandomizedTests
     end
 
     def teardown_all
-      Tracker.register(self.class, @values)
+      ExecutionOrderTracker.register(self, @values)
     end
 
     test('a') { @values << 'a' }
@@ -49,20 +49,14 @@ module RandomizedTests
   class C < A
   end
 
-  def self.assert_execution_order_with(test)
-    expected_tracker_data = [
-      [B, ['c', 'a', 'b', 'd']],
-      [A, ['c', 'd', 'b', 'a']],
-      [C, ['a', 'd', 'c', 'b']]
-    ]
+  def self.assert_execution_order_with(test, expected_order:)
+    registered_execution_order = ExecutionOrderTracker.registered
 
     test.new.assert(
-      Tracker.data == expected_tracker_data,
-      [
-       'Tracked data of randomized execution',
-       "must be eq #{expected_tracker_data}",
-       "but it was #{Tracker.data}"
-      ].join("\n")
+      registered_execution_order == expected_order,
+      ['The randomized execution order',
+       "must be eq #{expected_order}",
+       "but it was #{registered_execution_order}"].join("\n")
     )
   end
 end

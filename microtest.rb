@@ -4,13 +4,11 @@ require 'set'
 require 'singleton'
 
 module Microtest
-  VERSION = '0.4.0'
+  VERSION = '0.5.0'
 
-  BuildRandom = -> (seed, randomized) do
+  TryToBuildARandom = -> (seed, randomized) do
     Random.new Integer(seed ? seed : rand(1000..99999)) if seed || randomized
   end
-
-  RandomBuilder = -> (randomized) { BuildRandom.call(ENV['SEED'], randomized) }
 
   class Runner
     include Singleton
@@ -40,26 +38,26 @@ module Microtest
     private
 
     def iterate_each_test_after_try_to_apply(random)
-      list(@test_cases, random).each do |test_case|
-        yield method(:test_caller).curry[test_case.new],
-              list(test_case.public_instance_methods.grep(/\Atest_/), random)
+      shuffle_if_random(@test_cases, random).each do |test_case|
+        test_methods = test_case.public_instance_methods.grep(/\Atest_/)
+
+        yield method(:call_test).curry[test_case.new],
+              shuffle_if_random(test_methods, random)
       end
     end
 
-    def test_caller(test_case, method_to_call, method_arg = nil)
+    def call_test(test_case, method_to_call, method_arg = nil)
       return unless test_case.respond_to?(method_to_call)
       method = test_case.method(method_to_call)
       method.arity == 0 ? method.call : method.call(method_arg)
     end
 
-    def list(relation, random)
+    def shuffle_if_random(relation, random)
       random ? relation.to_a.shuffle(random: random) : relation
     end
   end
 
   class Test
-    FAILURE_MESSAGE = 'Failed test'
-
     def self.inherited(test_case)
       Runner.instance.register(test_case)
     end
@@ -70,11 +68,11 @@ module Microtest
       define_method(method, &block)
     end
 
-    def assert(test, msg = FAILURE_MESSAGE)
+    def assert(test, msg = 'Expected true but got false')
       stop!(caller, msg) unless test
     end
 
-    def refute(test, msg = FAILURE_MESSAGE)
+    def refute(test, msg = 'Expected false but got true')
       stop!(caller, msg) if test
     end
 
@@ -87,7 +85,9 @@ module Microtest
   end
 
   def self.report(randomized = nil)
-    yield result = RandomBuilder.call(randomized)
+    random = TryToBuildARandom.call(ENV['SEED'], randomized)
+
+    yield -> { Runner.instance.call(random: random) }
 
     puts "\n\e[#{32}m\u{1f60e} Tests passed!\e[0m\n\n"
   rescue => e
@@ -95,10 +95,10 @@ module Microtest
 
     puts ["\e[#{31}m", content, "\e[0m"].flatten.join("\n")
   ensure
-    puts "Randomized with seed: #{result.seed}\n\n" if result.is_a?(Random)
+    puts "Randomized with seed: #{random.seed}\n\n" if random.is_a?(Random)
   end
 
   def self.call(randomized: false)
-    report(randomized) { |random| Runner.instance.call(random: random) }
+    report(randomized) { |runner| runner.call }
   end
 end
