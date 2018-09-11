@@ -6,12 +6,21 @@ A xUnit family unit testing microframework for Ruby.
 
 > Ruby >= 2.2.2
 
-## Running the tests
+## Installation
 
-```sh
-  rake test
-  # or
-  ruby test_runner.rb
+Add this line to your application's Gemfile:
+```
+gem 'u-test'
+```
+
+And then execute:
+```
+$ bundle
+```
+
+Or install it yourself as:
+```
+$ gem install u-test
 ```
 
 ## How to use
@@ -116,4 +125,12 @@ SEED=1234 ruby test_runner.rb
 Or enable it via `Microtest.call`. e.g:
 ```ruby
 Microtest.call randomized: true
+```
+
+## Running the tests
+
+```sh
+  rake test
+  # or
+  ruby test_runner.rb
 ```
