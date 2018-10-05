@@ -29,8 +29,10 @@ $ gem install u-test
 ```ruby
 # number.rb
 module Number
-  ONE = 1
-  TWO = 2
+  ALL = [
+    ONE = 1
+    TWO = 2
+  ]
 end
 ```
 
@@ -49,6 +51,13 @@ class TestNumberTwo < Microtest::Test
     refute Number::TWO == Number::ONE
   end
 end
+
+# test_all_numbers.rb
+class TestAllNumbers < Microtest::Test
+  def test_all_numbers_constant
+    assert Number::ALL == [1, 2]
+  end
+end
 ```
 
 ### 3) Create the test runner
@@ -56,7 +65,9 @@ end
 # test_runner.rb
 require_relative 'number'
 
+# If you decided to embed the microtest code with your project (case of usage: a gist).
 require_relative 'microtest'
+# Or install and use it via rubygems (gem install 'u-test') and `require 'microtest'`.
 
 Dir['test_number*.rb']
   .reject { |file| file.include?(__FILE__.split('/').last) }
