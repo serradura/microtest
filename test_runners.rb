@@ -33,3 +33,5 @@ RunRubyProgram.call('test_runner_to_assert_a_random_execution')
 RunRubyProgram.call('test_runner_to_assert_an_execution_in_sequence')
 
 RunRubyProgram.call('test_runner_to_assert_microtest_outputs')
+
+RunRubyProgram.call('test_runner_to_assert_the_calling_of_test_methods')

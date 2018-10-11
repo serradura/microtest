@@ -4,7 +4,7 @@ require 'set'
 require 'singleton'
 
 module Microtest
-  VERSION = '0.7.0'
+  VERSION = '0.8.0'
 
   TryToBuildARandom = -> (seed, randomized) do
     Random.new Integer(seed ? seed : rand(1000..99999)) if seed || randomized
@@ -40,6 +40,8 @@ module Microtest
     def iterate_each_test_after_try_to_shuffle(random)
       shuffle_if_random(@test_cases, random).each do |test_case|
         test_methods = test_case.public_instance_methods.grep(/\Atest_/)
+
+        next if test_methods.size == 0
 
         yield method(:call_test).curry[test_case.new],
               shuffle_if_random(test_methods, random)
