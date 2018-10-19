@@ -10,8 +10,8 @@ Microtest.report(out: Kernel) do |runner|
   runner.call
 
   RandomizedTests.assert_execution_order_with Microtest::Test, expected_order: [
-    [RandomizedTests::A, ['a', 'b', 'c', 'd']],
-    [RandomizedTests::B, ['a', 'b', 'c', 'd']],
-    [RandomizedTests::C, ['a', 'b', 'c', 'd']]
+    [RandomizedTests::A, ['d', 'a', 'b', 'c']],
+    [RandomizedTests::B, ['d', 'a', 'b', 'c']],
+    [RandomizedTests::C, ['d', 'a', 'b', 'c']]
   ]
 end

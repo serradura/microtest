@@ -4,7 +4,7 @@ require 'set'
 require 'singleton'
 
 module Microtest
-  VERSION = '0.8.0'
+  VERSION = '0.9.0'
 
   TryToBuildARandom = -> (seed, randomized) do
     Random.new Integer(seed ? seed : rand(1000..99999)) if seed || randomized
@@ -87,21 +87,27 @@ module Microtest
     end
   end
 
-  def self.report(randomized = nil, out:)
+  def self.report(randomized = nil, out:, exit_when_finish: false)
     random = TryToBuildARandom.call(ENV['SEED'], randomized)
 
     yield -> { Runner.instance.call(random: random) }
 
     out.puts "\n\e[#{32}m\u{1f60e} Tests passed!\e[0m\n\n"
+
+    exit_result = 0
   rescue => e
     content = ["\u{1f4a9} <#{e.class}> #{e.message}\n", e.backtrace.join("\n")]
 
     out.puts ["\e[#{31}m", content, "\e[0m"].flatten.join("\n")
+
+    exit_result = 1
   ensure
     out.puts "Randomized with seed: #{random.seed}\n\n" if random.is_a?(Random)
+
+    exit(exit_result) if exit_when_finish
   end
 
-  def self.call(randomized: false, out: Kernel)
-    report(randomized, out: out) { |runner| runner.call }
+  def self.call(randomized: false, out: Kernel, exit_when_finish: true)
+    report(randomized, out: out, exit_when_finish: exit_when_finish, &:call)
   end
 end
